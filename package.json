@@ -1,7 +1,7 @@
 {
   "name": "grand-frere",
   "version": "0.0.1",
-  "homepage": "https://gf.wonj.in/",
+  "homepage": "https://piscine.wonj.in/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

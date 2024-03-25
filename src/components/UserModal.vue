@@ -167,7 +167,7 @@ async function submit(mode) {
 	background-color: #fefefe;
 	padding: 48px 32px;
 	border-radius: 18px;
-	max-height: 100%;
+	max-height: 90%;
 	overflow-y: auto;
 	max-width: 90%;
 	.button {

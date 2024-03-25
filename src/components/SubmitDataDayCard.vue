@@ -4,9 +4,9 @@
 			<div class="date-container">
 				<span class="day-th">{{ props.item.day_th }}일차</span>
 				<div class="date-range">
-					<span>{{ format_date(props.item.date) }}</span>
+					<span>{{ `${format_date(props.item.date)} ` }}</span>
 
-					<span> ~ {{ format_date(tomorrow_of_item_date) }}</span>
+					<span>{{ ` ~${format_date(tomorrow_of_item_date)}` }}</span>
 				</div>
 			</div>
 			<div class="abstract-container">
@@ -15,8 +15,17 @@
 						<span>미완료</span>
 					</div>
 					<div class="person-list">
-						<div class="person" v-for="boj_id in person_fail" :key="boj_id">
-							<span>{{ get_name_by_boj_id(boj_id) }}</span>
+						<template v-if="failed_user_boj_id.length > 0">
+							<div
+								class="person"
+								v-for="boj_id in failed_user_boj_id"
+								:key="boj_id"
+							>
+								<span>{{ get_name_by_boj_id(boj_id) }}</span>
+							</div>
+						</template>
+						<div v-else>
+							<span style="font-size: 48px">👏</span>
 						</div>
 					</div>
 				</div>
@@ -24,9 +33,19 @@
 					<div class="title">
 						<span>완료</span>
 					</div>
+
 					<div class="person-list">
-						<div class="person" v-for="boj_id in person_pass" :key="boj_id">
-							<span>{{ get_name_by_boj_id(boj_id) }}</span>
+						<template v-if="passed_user_boj_id.length > 0">
+							<div
+								class="person"
+								v-for="boj_id in passed_user_boj_id"
+								:key="boj_id"
+							>
+								<span>{{ get_name_by_boj_id(boj_id) }}</span>
+							</div>
+						</template>
+						<div v-else>
+							<span style="font-size: 48px">😭</span>
 						</div>
 					</div>
 				</div>
@@ -45,22 +64,43 @@ const props = defineProps({
 });
 const emits = defineEmits(['open']);
 
-const person_pass = computed(() => Object.keys(props.item.item_groupby_boj_id));
-const person_fail = computed(() => {
-	if (person_pass.value.length === 0)
-		return props.user.map(item => item.boj_id);
-
-	const user_boj_id = props.user.map(item => item.boj_id);
-	const result = user_boj_id.filter(item => !person_pass.value.includes(item));
-
-	return result;
-});
-
 const tomorrow_of_item_date = computed(() => {
 	const date = new Date(props.item.date);
 	date.setDate(date.getDate() + 1);
 	date.setSeconds(date.getSeconds() - 1);
 	return date;
+});
+
+const valid_user_boj_id = computed(() => {
+	//tomorrow_of_item_date 이전의 시간에 등록한 유저
+	const registered_users_before_tomorrow_of_item_date = props.user.filter(
+		item => new Date(item.registered_at) < tomorrow_of_item_date.value,
+	);
+	// 에서 boj_id만 뽑기
+	return registered_users_before_tomorrow_of_item_date.map(item => item.boj_id);
+});
+
+const passed_user_boj_id = computed(() => {
+	// 이 날짜에 제출한 유저
+	const user_boj_id_submitted = Object.keys(props.item.item_groupby_boj_id);
+
+	// 이 날짜에 제출한 유저 중 tomorrow_of_item_date 이전의 시간에 등록한 유저
+	const pass = [];
+	user_boj_id_submitted.forEach(user => {
+		if (valid_user_boj_id.value.includes(user)) {
+			pass.push(user);
+		}
+	});
+
+	return pass;
+});
+
+const failed_user_boj_id = computed(() => {
+	const result = valid_user_boj_id.value.filter(
+		item => !passed_user_boj_id.value.includes(item),
+	);
+
+	return result;
 });
 
 function get_name_by_boj_id(boj_id) {
@@ -74,13 +114,13 @@ function format_date(date) {
 	let day = date.getDate();
 	let hour = date.getHours();
 	let minute = date.getMinutes();
-	let second = date.getSeconds();
+	// let second = date.getSeconds();
 
 	month = month >= 10 ? month : '0' + month;
 	day = day >= 10 ? day : '0' + day;
 	hour = hour >= 10 ? hour : '0' + hour;
 	minute = minute >= 10 ? minute : '0' + minute;
-	second = second >= 10 ? second : '0' + second;
+	// second = second >= 10 ? second : '0' + second;
 
 	return (
 		date.getFullYear() +
@@ -94,9 +134,9 @@ function format_date(date) {
 		' ' +
 		hour +
 		':' +
-		minute +
+		minute /*+
 		':' +
-		second
+		second*/
 	);
 }
 function open_submit_data_modal() {
@@ -174,8 +214,13 @@ function open_submit_data_modal() {
 				text-align: center;
 			}
 			.person-list {
-				padding: 8px;
+				padding: 12px;
+				text-align: center;
+
 				.person {
+					// padding: 4px;
+				}
+				div {
 					padding: 4px;
 				}
 			}

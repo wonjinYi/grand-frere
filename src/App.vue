@@ -112,9 +112,7 @@ import SubmitDataWeekGroup from '@/components/SubmitDataWeekGroup.vue';
 // initilize
 const user = ref({});
 const submit_data = ref({});
-const server_setting = ref({
-	challenge_start_date: new Date(),
-});
+const server_setting = ref({});
 
 const target_date_range = ref({
 	start: new Date(),
@@ -184,7 +182,8 @@ const grouped_submit_data = computed(() => {
 	// 1. 주(24*7시간) 단위로 // * 주차 수 'n'은 get_week_number() 호출 결과에 따름
 	// 2. 일(24시간) 단위로
 	// 3. 백준 아이디 별로
-	// 주, 일은 KST를 기준으로 월~일, 0시~24시로 분할됨
+	// -- 주(24*7시간) 분할 단위 : 월요일 06시 ~ 다음주 월요일 06시
+	// -- 일(=24시간=요일) 분할 단위 : 월 06~화 06, 화 06~수 06, ... 일 06~(다음주)월 06
 
 	/*
 		리턴값(items_groupby_week_number) 형식
@@ -215,7 +214,7 @@ const grouped_submit_data = computed(() => {
 
 	const { start, end } = target_date_range.value;
 
-	// 일(24시간) 단위로 분할. (KST기준 0시부터 ~ 24시 이전)
+	// 일(24시간) 단위로 분할. (KST기준 06시부터 ~ 익일 06시 이전)
 	for (let i = new Date(start); i <= end; i.setDate(i.getDate() + 1)) {
 		const tomorrow_of_i = new Date(i);
 		tomorrow_of_i.setDate(tomorrow_of_i.getDate() + 1);

@@ -7,7 +7,21 @@
 		</div>
 
 		<!-- 주차 요약 정보 영역 -->
-		<div class="week-summary"></div>
+		<div class="week-summary">
+			<div
+				class="person"
+				:class="[
+					item.fail > 2 ? 'person-died' : '',
+					item.pass >= 5 ? 'person-survived' : '',
+				]"
+				v-for="item in summmary_data"
+				:key="item.boj_id"
+			>
+				<span class="person-submit-cnt">{{ item.submit_cnt }}</span>
+				<span class="person-name">{{ get_name_by_boj_id(item.boj_id) }}</span>
+				<span> {{ item.pass }} / {{ item.fail }}</span>
+			</div>
+		</div>
 
 		<!-- 일별 카드  -->
 		<div class="card-container">
@@ -18,6 +32,7 @@
 				:item="day"
 				:index="index"
 				@open="open_submit_data_modal"
+				@update-pass-fail="update_week_summary"
 			>
 			</submit-data-day-card>
 		</div>
@@ -31,7 +46,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import SubmitDataDayCard from '@/components/SubmitDataDayCard.vue';
 
 const props = defineProps({
@@ -41,16 +56,44 @@ const props = defineProps({
 });
 const emits = defineEmits(['open']);
 
-// const person_pass = computed(() => Object.keys(props.item.submit_data));
-// const person_fail = computed(() => {
-// 	if (person_pass.value.length === 0)
-// 		return props.user.map(item => item.boj_id);
+const first_date_of_week = ref(props.item.item_groupby_day[0].date);
+const second_date_of_week = computed(() => {
+	const date = new Date(first_date_of_week.value);
+	date.setDate(date.getDate() + 1);
+	return date;
+});
 
-// 	const user_boj_id = props.user.map(item => item.boj_id);
-// 	const result = user_boj_id.filter(item => !person_pass.value.includes(item));
+const summmary_data = ref({}); // summary_data[boj_id] = {pass : number, fail : number}
 
-// 	return result;
-// });
+function update_week_summary({ passed_user_record, failed_user_boj_id }) {
+	// select valid users ( registered_at < second date start time )
+	const valid_user_boj_id = props.user
+		.filter(({ registered_at }) => {
+			const date = new Date(registered_at);
+			return date < second_date_of_week.value;
+		})
+		.map(({ boj_id }) => boj_id);
+
+	valid_user_boj_id.forEach(boj_id => {
+		if (!summmary_data.value[boj_id]) {
+			summmary_data.value[boj_id] = {
+				boj_id: boj_id,
+				pass: 0,
+				fail: 0,
+				submit_cnt: 0,
+			};
+		}
+	});
+
+	Object.keys(passed_user_record).forEach(boj_id => {
+		summmary_data.value[boj_id].pass += 1;
+		summmary_data.value[boj_id].submit_cnt += passed_user_record[boj_id];
+	});
+
+	failed_user_boj_id.forEach(boj_id => {
+		summmary_data.value[boj_id].fail += 1;
+	});
+}
 
 function get_name_by_boj_id(boj_id) {
 	const idx = props.user.findIndex(item => item.boj_id === boj_id);
@@ -85,5 +128,42 @@ function open_submit_data_modal(day_index) {
 	display: flex;
 	flex-direction: column-reverse;
 	flex-wrap: wrap;
+	align-items: center;
+}
+
+.week-summary {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+
+	.person {
+		width: fit-content;
+		margin: 4px;
+		// padding: 4px;
+		border: 1px solid #9b9b9b;
+		border-radius: 8px;
+		span {
+			display: inline-block;
+			padding: 4px;
+		}
+		.person-name {
+			border-right: 1px solid #9b9b9b;
+		}
+		.person-submit-cnt {
+			vertical-align: center;
+			// font-weight: 500;
+			// padding: 0 4px;
+			// padding: 4px;
+			border-radius: 8px 0 0 8px;
+			background-color: black;
+			color: white;
+		}
+	}
+	.person-survived {
+		background-color: #eaffea;
+	}
+	.person-died {
+		background-color: #fed5d5;
+	}
 }
 </style>

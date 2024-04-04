@@ -55,14 +55,22 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 
 const props = defineProps({
 	user: Object,
 	item: Object,
 	index: Number,
 });
-const emits = defineEmits(['open']);
+const emits = defineEmits(['open', 'update-pass-fail']);
+
+onMounted(() => {
+	emits('update-pass-fail', {
+		index: props.index,
+		passed_user_record: passed_user_record.value,
+		failed_user_boj_id: failed_user_boj_id.value,
+	});
+});
 
 const tomorrow_of_item_date = computed(() => {
 	const date = new Date(props.item.date);
@@ -80,19 +88,21 @@ const valid_user_boj_id = computed(() => {
 	return registered_users_before_tomorrow_of_item_date.map(item => item.boj_id);
 });
 
-const passed_user_boj_id = computed(() => {
+const passed_user_record = computed(() => {
 	// 이 날짜에 제출한 유저
 	const user_boj_id_submitted = Object.keys(props.item.item_groupby_boj_id);
 
-	// 이 날짜에 제출한 유저 중 tomorrow_of_item_date 이전의 시간에 등록한 유저
-	const pass = [];
+	// 이 날짜에 제출한 유저 중 tomorrow_of_item_date 이전의 시간에 등록한 유저에 대해
+	// { boj_id: 푼 문제 수 }로 이루어진 객체를 반환
+	const pass = {};
 	user_boj_id_submitted.forEach(user => {
-		if (valid_user_boj_id.value.includes(user)) {
-			pass.push(user);
-		}
+		pass[user] = props.item.item_groupby_boj_id[user].length;
 	});
-
 	return pass;
+});
+
+const passed_user_boj_id = computed(() => {
+	return Object.keys(passed_user_record.value);
 });
 
 const failed_user_boj_id = computed(() => {
@@ -166,6 +176,7 @@ function open_submit_data_modal() {
 .card-body {
 	display: flex;
 	flex-direction: column;
+	width: fit-content;
 
 	background-color: white;
 	border: 1px solid #9b9b9b;

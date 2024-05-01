@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 const BASE_URL =
-	'https://script.google.com/macros/s/AKfycbymzwCjYHjO5I-S1YbBUYq3PC5_UElo_s9hugsRBOr-bFxnne2kWqYElR0ocEOl4ayq7g/exec';
+	'https://script.google.com/macros/s/AKfycbwpQ22rqpBUXsGZ0gIhB6ZDQEDS5hgUyJWIgQ0nTahBT4vhtCDsVf58Qrgdi6YGjO745Q/exec';
+
+// 차단당한 URL
+// 'https://script.google.com/macros/s/AKfycbymzwCjYHjO5I-S1YbBUYq3PC5_UElo_s9hugsRBOr-bFxnne2kWqYElR0ocEOl4ayq7g/exec';
 
 function success({ res, message }) {
 	return {
